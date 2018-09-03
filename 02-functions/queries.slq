@@ -1,0 +1,70 @@
+# Fuctions
+
+-- This file covers the usage of single row functions.
+
+### Upper case of all names
+SELECT UPPER(first_name) FROM employees;
+
+### Lower case of all names
+SELECT UPPER(first_name), LOWER(department) FROM employees;
+
+### Length of all names
+SELECT first_name, LENGTH(first_name) FROM employees;
+
+### Trim string characters
+SELECT TRIM('    HELLO WORLD    ');
+
+### Testing function association
+SELECT LENGTH(TRIM('    HELLO WORLD    '));
+SELECT LENGTH(TRIM('    HELLO WORLD    '))=LENGTH('HELLO WORLD');
+SELECT ('Sports' IN ('SPORTS', 'CHILDREN'));
+
+### Combine column values
+SELECT first_name || ' ' || last_name FROM employees;
+SELECT first_name || ' ' || last_name AS 'Full Name' FROM employees;
+SELECT first_name || ' ' || last_name full_name, department FROM employees;
+SELECT first_name || ' ' || last_name full_name, department, (salary > 30000) FROM employees;
+SELECT first_name || ' ' || last_name full_name, department, (salary > 30000) FROM employees ORDER BY salary DESC;
+SELECT first_name || ' ' || last_name full_name, department, (salary > 30000) is_highly_paid FROM employees ORDER BY salary DESC;
+
+### Create dummy data
+SELECT 'Dummy data' foo;
+
+### Substring
+SELECT SUBSTRING('This is a long string' FROM 5) extracted_text_data;
+SELECT SUBSTRING('This is a long string' FROM 1 FOR 4) extracted_text_data;
+SELECT SUBSTRING('This is a long string' FROM 9 FOR 4) extracted_text_data;
+
+### Replace
+SELECT department, REPLACE(department, 'Clothing', 'Attire') modified_data FROM employees;
+SELECT department, REPLACE(department, 'Clothing', 'Attire') || ' Department' modified_data FROM employees;
+SELECT department, REPLACE(department, 'Clothing', 'Attire') || ' Department' modified_data as "Complete Department Name" FROM employees;
+
+### Position function returns the position for a string
+SELECT email, POSITION('@' IN email) FROM employees;
+SELECT email, SUBSTRING(email FROM POSITION('@' IN email)) FROM employees;
+SELECT email, SUBSTRING(email FROM POSITION('@' IN email)+1) AS "Domains" FROM employees;
+
+### Coalesce function changes null to values in parameters
+SELECT email, COALESCE(email, 'none') FROM employees;
+
+# Grouping Function
+
+-- This file covers the usage of grouping functions.
+
+### Maximum value based on column
+SELECT MAX(salary) FROM employees;
+
+### Minimum value based on column
+SELECT MIN(salary) FROM employees;
+
+### Sum numeric on column
+SELECT SUM(salary) FROM employees;
+
+### Count value based on column
+SELECT COUNT(*) FROM employees;
+SELECT COUNT(employee_id) FROM employees;
+
+### Average value based on column
+SELECT AVG(salary) FROM employees;
+
