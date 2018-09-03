@@ -1,0 +1,83 @@
+# Basics
+
+-- This file covers the basic usage of the SQL syntax.
+
+### all columns from employees table
+SELECT * FROM employees;
+
+### select some columns from employees table
+SELECT first_name, last_name, email FROM employees;
+
+### sql syntax is not case sensitive
+SELECT * fRoM EmployEEs;
+
+### semicolon is optional if you whant to run only one query
+SELECT * FROM employees
+
+## Where condition and filtering
+
+### all columns from employees table who earn more than 10000
+SELECT * FROM employees WHERE salary > 10000;
+
+### compulsory filtering conditions are done using AND
+SELECT * FROM employees WHERE salary > 19000 AND department = 'Sports';
+
+### optional filtering conditions are done using OR
+SELECT * FROM employees WHERE department = 'Sports' OR department = 'Tools';
+
+### aggregated filtering conditions are done using parenthesis
+SELECT * FROM employees WHERE salary > 29000 AND (department = 'Sports' OR department = 'Tools');
+
+### negation has many different syntax
+SELECT * FROM employees WHERE NOT department = 'Sports';
+SELECT * FROM employees WHERE department != 'Sports';
+SELECT * FROM employees WHERE department <> 'Sports';
+
+### non existing values (null values) are compared using the IS key word
+SELECT * FROM employees WHERE email = NULL; -- DOES NOT WORK
+SELECT * FROM employees WHERE email IS NULL;
+SELECT * FROM employees WHERE email IS NOT NULL;
+
+### series of values queries use IN operatior
+SELECT * FROM employees WHERE department IN ['Sports', 'Game', 'Tools'];
+
+### range values queries use BETWEEN operator
+SELECT * FROM employees WHERE salary BETWEEN 29000 AND 35000;
+
+# Exercices
+
+### First name and email of female that work in the tools department having a salary greater than 110.000
+
+SELECT first_name, email FROM employees WHERE gender = 'F' AND department = 'Tools' AND salary > 110000;
+
+### First name and hire date of those employees who earn more than 165.000 as well as those employees that work in the sports department and also happend to be man
+
+SELECT first_name, hire_date FROM employees WHERE salary > 165000 OR (department = 'Sports' AND gender = 'M')
+
+### First name and hire date of those employees who were hired during Jan 1st 2002 and Jan 1st 2004
+
+SELECT first_name, hire_date FROM employees WHERE hire_date BETWEEN '2002-01-01' AND '2004-01-01';
+
+### Male employees who work in the automotive department and earn more than 40.000 and less than 100.000 as well as females that work in the toys department
+
+SELECT * FROM employees WHERE gender = 'M' AND department = 'Automotive' AND salary BETWEEN 40000 AND 100000 OR (gender = 'F' AND department = 'Toys');
+
+## Order By, Limit, Distinct and Renaming Columns
+
+### Ordering data based on a given condition
+SELECT * FROM employees ORDER BY employee_id; -- Ascending
+SELECT * FROM employees ORDER BY employee_id DESC; -- Descending
+SELECT * FROM employees ORDER BY department ASC; -- Ascending
+
+### Unique elements
+SELECT DISTINCT department FROM employees;
+-- Mix with diferent operators. 1 is the first position at the SELECT clause
+SELECT DISTINCT department FROM employees ORDER BY 1;
+SELECT DISTINCT department FROM employees ORDER BY 2; -- Causes an error
+
+### Limit the amout of records
+SELECT DISTINCT department FROM employees LIMIT 5; -- only 5 departments are shown
+SELECT DISTINCT department FROM employees FETCH FIRST 5 ROWS ONLY; -- same as above
+
+### Naming columns with specific names
+SELECT first_name, last_name, department, salary AS "Yearly Salary" FROM employees;
