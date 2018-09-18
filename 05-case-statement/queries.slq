@@ -1,0 +1,134 @@
+# Case Statement
+-- This section covers the usage of case statement.
+
+### Select from two tables at the same time
+SELECT first_name, salary,
+CASE
+  WHEN salary < 100000 THEN 'Under paid'
+  WHEN salary > 100000 AND salary < 160000 THEN 'Paid well'
+  WHEN salary > 160000 THEN 'Executive'
+  ELSE 'Unpaid'
+END AS category
+FROM employees ORDER BY salary DESC;
+
+# Exercise
+
+### Count how many employees there are in each category with two columns
+### category name and counts
+SELECT
+  c.category_name, COUNT(c.category_name)
+FROM
+(SELECT CASE
+  WHEN salary < 100000 THEN 'Under paid'
+  WHEN salary > 100000 AND salary < 160000 THEN 'Paid well'
+  WHEN salary > 160000 THEN 'Executive'
+  ELSE 'Unpaid'
+END AS category_name
+FROM employees) AS c
+GROUP BY c.category_name;
+
+# Transpose Result Query
+
+### Transpose the result of the previous query
+SELECT
+  SUM(CASE WHEN salary < 100000 THEN 1 ELSE 0 END) AS underpaid,
+  SUM(CASE WHEN salary > 100000 AND salary < 160000 THEN 1 ELSE 0 END) AS paid_well,
+  SUM(CASE WHEN salary > 160000 THEN 1 ELSE 0 END) AS executive
+FROM employees
+
+# Exercise
+
+### Transpose the result of the following query
+SELECT department, count(*)
+FROM
+  employees
+WHERE
+  department IN ('Sports', 'Computers', 'Tools', 'Clothing')
+GROUP BY department
+
+SELECT
+  SUM(CASE WHEN department = 'Sports' THEN 1 ELSE 0 END) AS "Sports Employees",
+  SUM(CASE WHEN department = 'Computers' THEN 1 ELSE 0 END) AS "Computers Employees",
+  SUM(CASE WHEN department = 'Tools' THEN 1 ELSE 0 END) AS "Tools Employees",
+  SUM(CASE WHEN department = 'Clothing' THEN 1 ELSE 0 END) AS "Clothing Employees"
+FROM
+  employees;
+
+### Use CASE to simulate joins queries to list all employees and theirs country
+SELECT
+first_name,
+  CASE WHEN region_id = 1 THEN (SELECT country FROM regions WHERE region_id = 1) END region_1,
+  CASE WHEN region_id = 2 THEN (SELECT country FROM regions WHERE region_id = 2) END region_2,
+  CASE WHEN region_id = 3 THEN (SELECT country FROM regions WHERE region_id = 3) END region_3,
+  CASE WHEN region_id = 4 THEN (SELECT country FROM regions WHERE region_id = 4) END region_4,
+  CASE WHEN region_id = 5 THEN (SELECT country FROM regions WHERE region_id = 5) END region_5,
+  CASE WHEN region_id = 6 THEN (SELECT country FROM regions WHERE region_id = 6) END region_6,
+  CASE WHEN region_id = 7 THEN (SELECT country FROM regions WHERE region_id = 7) END region_7
+FROM
+  employees;
+
+
+### Based on the query above, count how many employees work for each country
+SELECT
+  COUNT(a.region_1)+COUNT(a.region_2)+COUNT(a.region_3) AS "United States",
+  COUNT(a.region_4)+COUNT(a.region_5) AS "Asia",
+  COUNT(a.region_6)+COUNT(a.region_7) AS "Canada"
+FROM
+  (SELECT
+    first_name,
+      CASE WHEN region_id = 1 THEN (SELECT country FROM regions WHERE region_id = 1) END region_1,
+      CASE WHEN region_id = 2 THEN (SELECT country FROM regions WHERE region_id = 2) END region_2,
+      CASE WHEN region_id = 3 THEN (SELECT country FROM regions WHERE region_id = 3) END region_3,
+      CASE WHEN region_id = 4 THEN (SELECT country FROM regions WHERE region_id = 4) END region_4,
+      CASE WHEN region_id = 5 THEN (SELECT country FROM regions WHERE region_id = 5) END region_5,
+      CASE WHEN region_id = 6 THEN (SELECT country FROM regions WHERE region_id = 6) END region_6,
+      CASE WHEN region_id = 7 THEN (SELECT country FROM regions WHERE region_id = 7) END region_7
+    FROM
+      employees) AS a
+
+# Exercise
+
+### Based on the fruit-imports-data.sql
+### Write a query that displays 3 columns. The query should display the fruit and it's total supply
+### along with a category of either LOW, ENOUGH or FULL. Low category means that the total
+### supply of the fruit is less than 20,000. The enough category means that the total supply
+### is between 20,000 and 50,000. If the total supply is greater than 50,000 then that
+### fruit falls in the full category
+SELECT
+  name,
+  supply,
+  CASE
+    WHEN supply < 20000 THEN 'LOW'
+    WHEN supply > 20000 AND supply < 50000 THEN 'ENOUGH'
+    WHEN supply > 50000 THEN 'FULL'
+  END AS "Status"
+FROM
+  fruit_imports;
+
+### Taking into consideration the supply column and the cost_per_unit column, you should be able to
+### tabulate the total cost to import fruits by each season. The result will look something like this:
+
+### "Winter" "10072.50"
+### "Summer" "19623.00"
+### "All Year" "22688.00"
+### "Spring" "29930.00"
+### "Fall" "29035.00"
+
+### Write a query that would transpose this data so that the seasons become columns and
+### the total cost for each season fills the first row
+SELECT
+  season,
+  SUM(cost_per_unit*supply)
+FROM
+  fruit_imports
+GROUP BY season;
+
+
+SELECT
+  SUM(CASE WHEN season = 'Winter' THEN cost_per_unit*supply END) as Winter,
+  SUM(CASE WHEN season = 'Summer' THEN cost_per_unit*supply END) as Summer,
+  SUM(CASE WHEN season = 'Spring' THEN cost_per_unit*supply END) as Spring,
+  SUM(CASE WHEN season = 'Fall' THEN cost_per_unit*supply END) as Fall,
+  SUM(CASE WHEN season = 'All Year' THEN cost_per_unit*supply END) as All_Year
+FROM
+  fruit_imports;
