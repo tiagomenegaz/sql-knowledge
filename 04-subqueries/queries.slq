@@ -1,0 +1,118 @@
+# Aliases
+-- This section covers the usage of subqueries.
+
+### Select from two tables at the same time
+SELECT * FROM employees, departments;
+
+### Alias usage
+SELECT * FROM employees e, departments d;
+SELECT e.salary, d.division FROM employees e, departments d;
+
+# Subqueries
+
+### Subqueries in the from clause
+SELECT * FROM (SELECT department FROM departments) my_depart;
+
+### Subqueries in the where clause
+SELECT * FROM employees WHERE department NOT IN (SELECT department FROM departments);
+
+### Subqueries in the select clause
+SELECT first_name, last_name, salary,
+  (SELECT first_name FROM employees LIMIT 1)
+FROM employees;
+
+### Subqueries with alias
+SELECT * FROM (SELECT * FROM employees WHERE salary > 150000) high_paid;
+SELECT high_paid.first_name, high_paid.salary FROM (SELECT * FROM employees WHERE salary > 150000) high_paid;
+SELECT high_paid.employee_name, high_paid.yearly_salary FROM (
+  SELECT first_name employee_name, salary yearly_salary FROM employees WHERE salary > 150000
+) high_paid;
+
+### In the outter select is possible to reference the inner columns
+SELECT employee_name, yearly_salary FROM (
+  SELECT first_name employee_name, salary yearly_salary FROM employees WHERE salary > 150000
+) high_paid;
+
+# Exercises
+
+### All employees that work at the Electronics division
+SELECT * FROM employees
+WHERE department
+IN (SELECT department FROM departments WHERE division = 'Electronics');
+
+### All employees that work in either Asia or Canada and make over 130000
+SELECT * FROM employees
+WHERE salary > 130000 AND
+region_id IN (SELECT region_id FROM regions WHERE country IN ('Asia', 'Canada'));
+
+### First name, department along with how much less money they make than the highest paid employee
+SELECT first_name, department, (SELECT MAX(salary) FROM employees)-salary
+FROM employees;
+
+# All and Any operator
+
+### All employees who work outside the United States
+SELECT * FROM employees WHERE region_id > ALL (SELECT region_id FROM regions WHERE country = 'United States');
+
+### All employees who work in the United States
+SELECT * FROM employees WHERE region_id <= ALL (SELECT region_id FROM regions WHERE country = 'United States');
+SELECT * FROM employees WHERE region_id <= ANY (SELECT region_id FROM regions WHERE country = 'United States');
+
+### All employees who work in the United States
+SELECT * FROM employees WHERE region_id <= ALL (SELECT region_id FROM regions WHERE country = 'United States');
+
+# Exercise
+
+### All of those employees that work in the kids division AND the dates at
+### which those employees were hired is greater than all of the hire dates of employees who work
+### in the maintance department
+SELECT * FROM employees
+WHERE department = ANY (SELECT department FROM departments WHERE division = 'Kids')
+AND hire_date > ALL (SELECT hire_date FROM employees WHERE department = 'Maintenance');
+
+### The highest and most frequent salary
+SELECT salary FROM employees GROUP BY salary ORDER BY count(*) DESC, salary DESC LIMIT 1
+
+SELECT salary FROM employees
+GROUP BY salary
+HAVING count(*) >= ALL(SELECT count(*) FROM employees GROUP BY salary)
+ORDER BY salary DESC
+LIMIT 1
+
+### The average salary excluding the minimum and the maximum salaries
+SELECT ROUND(AVG(salary)) FROM employees
+WHERE salary > (SELECT MIN(salary) FROM employees) AND salary < (SELECT MAX(salary) FROM employees);
+
+SELECT ROUND(AVG(salary)) FROM employees
+WHERE salary NOT IN ((SELECT MIN(salary) FROM employees), (SELECT MAX(salary) FROM employees));
+
+### Use the following table to the next exercice
+create table dupes (id integer, name varchar(10));
+
+insert into dupes values (1, 'Frank');
+insert into dupes values (2, 'Frank');
+insert into dupes values (3, 'Robert');
+insert into dupes values (4, 'Robert');
+insert into dupes values (5, 'Sam');
+insert into dupes values (6, 'Frank');
+insert into dupes values (7, 'Peter');
+
+### Select only the name and its associated id
+SELECT MIN(id), name FROM dupes GROUP BY name;
+SELECT MAX(id), name FROM dupes GROUP BY name;
+
+### Use the file mock-data-university.sql for the next exercices
+
+### Using subqueries only, write a SQL statement that returns the names of those students that are taking the courses Physics and US History.
+SELECT student_name FROM students WHERE student_no IN (
+  SELECT student_no FROM student_enrollment WHERE course_no IN (
+    SELECT course_no FROM courses WHERE course_title IN ('Physics', 'US History')))
+
+### Using subqueries only, write a query that returns the name of the student that is taking the highest number of courses.
+SELECT student_name FROM students WHERE student_no IN (
+  SELECT student_no FROM student_enrollment GROUP BY student_no ORDER BY COUNT(student_no) DESC LIMIT 1
+)
+
+### Write a query to find the student that is the oldest.
+### You are not allowed to use LIMIT or the ORDER BY clause to solve this problem.
+SELECT * FROM students WHERE age = (SELECT MAX(age) FROM students);
