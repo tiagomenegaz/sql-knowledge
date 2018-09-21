@@ -1,0 +1,57 @@
+# Correlated Subqueries
+-- Correlated Subqueries are nested queries that use values from other queries.
+
+### For example, select name, department and salary of those employees whose make
+### more than the average of their department
+SELECT first_name, department, salary
+FROM employees e1
+WHERE salary > (
+  SELECT ROUND(AVG(salary)) FROM employees e2 WHERE e2.department = e1.department
+)
+ORDER BY department;
+
+### Now within the same region
+SELECT first_name, department, salary
+FROM employees e1
+WHERE salary > (
+  SELECT ROUND(AVG(salary)) FROM employees e2 WHERE e2.region_id = e1.region_id
+)
+ORDER BY department;
+
+### Lastly, showing the average
+SELECT first_name, department, salary,
+  (SELECT ROUND(AVG(salary)) FROM employees e2 WHERE e2.department = e1.department) AS average_salary
+FROM employees e1
+ORDER BY department;
+
+# Exercise
+
+### Query the name of the department which has more than 38 employees
+SELECT department
+FROM departments
+WHERE 38 < (SELECT COUNT(*) FROM employees WHERE departments.department = employees.department)
+ORDER BY department;
+
+### Based on the previous query, add a column with the highest payed salary for each department
+SELECT department, (SELECT MAX(salary) FROM employees WHERE departments.department = employees.department)
+FROM departments
+WHERE 38 < (SELECT COUNT(*) FROM employees WHERE departments.department = employees.department)
+ORDER BY department;
+
+### Create a query which shows four columns: department, first_name, salary, salary_in_department.
+### For each department you should show only two registers the maximum salary and
+### the minimum salary in the Salary in Department (MIN SALARY or MAX SALARY)
+SELECT department, first_name, salary,
+  CASE
+    WHEN salary = max_deparment THEN 'MAX SALARY'
+    ELSE 'MIN SALARY'
+  END
+FROM (
+  SELECT department, first_name, salary,
+    (SELECT MAX(salary) FROM employees max_salary WHERE e.department = max_salary.department) AS max_deparment,
+    (SELECT MIN(salary) FROM employees min_salary WHERE e.department = min_salary.department) AS min_deparment
+  FROM employees e
+) inner_query
+WHERE
+ salary = max_deparment OR salary = min_deparment
+ORDER BY department;
