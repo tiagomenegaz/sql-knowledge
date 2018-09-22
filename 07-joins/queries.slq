@@ -1,0 +1,271 @@
+# Joins
+-- Joins are clauses used to combine two or more tables together based on a related column
+
+### Without joins if we want select name, country from each employee.
+### We can do:
+SELECT first_name, country
+FROM employees, regions
+WHERE employees.region_id = regions.region_id
+
+### With joins the same query can be whitten as
+SELECT first_name, country
+FROM employees JOIN regions
+ON employees.region_id = regions.region_id
+
+# Exercise
+
+### Query the employee first name, division and email. Make sure the email exists.
+SELECT first_name, division, email
+FROM employees, departments
+WHERE email IS NOT NULL AND employees.department = departments.department
+ORDER BY division
+
+### Now, add country at the previous query
+SELECT first_name, division, email, country
+FROM employees, departments, regions
+WHERE email IS NOT NULL
+  AND employees.department = departments.department
+  AND regions.region_id = employees.region_id
+ORDER BY division
+
+### Now, add department at the previous query
+SELECT first_name, division, employees.department, email, country
+FROM employees, departments, regions
+WHERE email IS NOT NULL
+  AND employees.department = departments.department
+  AND regions.region_id = employees.region_id
+ORDER BY division
+
+### Now, make it shorter with aliases
+SELECT first_name, division, e.department, email, country
+FROM employees e, departments d, regions r
+WHERE email IS NOT NULL
+  AND e.department = d.department
+  AND r.region_id = e.region_id
+ORDER BY division
+
+### Select the country and the number of employees that work in each country
+SELECT country, COUNT(employees.employee_id)
+FROM regions, employees
+WHERE regions.region_id = employees.region_id
+GROUP BY country
+
+### Now change source of data
+SELECT country, COUNT(e.employee_id)
+FROM (SELECT * FROM regions) r, (SELECT * FROM employees) e
+WHERE r.region_id = e.region_id
+GROUP BY country
+
+# Inner, Left, Right and Full Outter Joins
+--- Inner Joins brings what is common between the sets of data
+
+### Now let's write this query using joins
+### SELECT first_name, country
+### FROM employees, regions
+### WHERE employees.region_id = regions.region_id
+
+SELECT first_name, country
+FROM employees
+INNER JOIN regions ON employees.region_id = regions.region_id
+
+### Another example
+SELECT first_name, email, division
+FROM employees
+INNER JOIN departments ON employees.department = departments.department
+
+### Now with regions
+SELECT first_name, email, division, country
+FROM employees
+INNER JOIN departments ON employees.department = departments.department
+INNER JOIN regions ON regions.region_id = employees.region_id
+
+--- Left Joins brigs what is present on the left side of the query
+--- Look at this exemple
+SELECT DISTINCT(department) FROM employees;
+SELECT DISTINCT(department) FROM departments;
+
+--- Note that there is a difference between those results.
+--- With left join you are able to include the difference
+SELECT DISTINCT(employees.department) employees_department,
+  departments.department departments_department
+FROM employees LEFT JOIN departments ON employees.department = departments.department
+ORDER BY employees.department
+
+--- Same thing when RIGHT is used. It means that the right column has preference and the amount
+--- of records will be different
+SELECT DISTINCT(employees.department) employees_department,
+  departments.department departments_department
+FROM employees RIGHT JOIN departments ON employees.department = departments.department
+ORDER BY employees.department
+
+--- Full outer join matches all elements from each source
+SELECT DISTINCT(employees.department) employees_department,
+  departments.department departments_department
+FROM employees FULL OUTER JOIN departments ON employees.department = departments.department
+ORDER BY employees.department
+
+# Exercise
+
+--- Query the departments that exist on the employees table and don't exist on the department table
+SELECT DISTINCT(employees.department) employees_department,
+  departments.department departments_department
+FROM employees LEFT OUTER JOIN departments ON employees.department = departments.department
+WHERE departments.department IS NUll
+
+# Union
+--- Union is an operation that combines two or more result sets from select statements
+
+--- With union you combine all departments from departments table and employees table removing duplicates
+SELECT department FROM employees
+UNION
+SELECT department FROM departments
+
+-- However, if you use Union All you have duplicates
+SELECT department FROM employees
+UNION ALL
+SELECT department FROM departments
+
+--- And you have to pay attention to stack the same columns (it will not work)
+SELECT department, region_id FROM employees
+UNION ALL
+SELECT department FROM departments
+
+# Except
+--- Except takes the first result and removes all the second query from it
+SELECT DISTINCT(department) FROM employees
+EXCEPT
+SELECT department FROM departments
+
+SELECT department FROM departments
+EXCEPT
+SELECT DISTINCT(department) FROM employees
+
+# Exercise
+
+### Create a query that contains two columns: department and number of employees.
+SELECT department, COUNT(employee_id)
+  FROM employees
+  GROUP BY department
+UNION
+SELECT 'Total', COUNT(employee_id)
+  FROM employees
+ORDER BY 2
+
+# Cartesian Product
+--- Cartesian Product is when you combine source of data without any filtering
+
+SELECT * FROM employees, departments
+SELECT * FROM employees e1, employees e2
+
+# Cross Join
+--- Cross Join is equal to Cartesian Product with a different sinyax
+SELECT * FROM employees e CROSS JOIN departments d
+SELECT * FROM employees e1 CROSS JOIN employees e2
+
+# Exercise
+
+### Query the first name, department, hire date and country of the first and last hired employee
+SELECT first_name, department, hire_date, country
+FROM
+employees INNER JOIN regions ON regions.region_id = employees.region_id
+WHERE hire_date = (SELECT MIN(hire_date) FROM employees)
+OR hire_date = (SELECT MAX(hire_date) FROM employees)
+
+
+(SELECT first_name, department, hire_date, country
+  FROM employees INNER JOIN regions ON regions.region_id = employees.region_id
+  WHERE hire_date = (SELECT MIN(hire_date) FROM employees e1)
+  LIMIT 1)
+UNION
+(SELECT first_name, department, hire_date, country
+  FROM employees INNER JOIN regions ON regions.region_id = employees.region_id
+  WHERE hire_date = (SELECT MAX(hire_date) FROM employees e2)
+  LIMIT 1)
+ORDER BY hire_date
+
+### Query how salary budget has fluctuated during 90 days period with three colums hire_date
+### salary and spending pattern
+SELECT hire_date, salary,
+  (
+    SELECT SUM(salary) FROM employees e2 WHERE e2.hire_date BETWEEN e1.hire_date - 90 AND e1.hire_date
+  ) AS spending_pattern
+FROM employees e1
+ORDER BY hire_date
+
+# Views
+--- Views is a virtual table. It is not possible to insert or delete data on it.
+--- It's used to represent data in a query and queries are done directly to the view.
+
+### First create any query
+SELECT first_name, email, d.department, salary, division, region, country
+FROM employees e, departments d, regions r
+WHERE e.department = d.department
+AND e.region_id = r.region_id
+
+### Now create a view based on the previous query
+CREATE VIEW v_employee_report AS
+SELECT first_name, email, d.department, salary, division, region, country
+FROM employees e, departments d, regions r
+WHERE e.department = d.department
+AND e.region_id = r.region_id
+
+### Now you're able to create query the view created as
+SELECT * FROM v_employee_report
+
+### Another termin to highlight here is the inline view which is any query executed at the FROM clause
+SELECT * FROM (SELECT * FROM employees) e
+SELECT * FROM (SELECT * FROM departments) d
+
+# Exercises
+
+### Are the tables student_enrollment and professors directly related to each other? Why or why not?
+### No. Professor is related to the Teach table which is related to student_enrollment
+
+### Write a query that shows the student's name, the courses the student is taking
+### and the professors that teach that course.
+SELECT
+  student_name, teach.course_no, last_name
+FROM
+  students INNER JOIN student_enrollment ON students.student_no = student_enrollment.student_no
+  INNER JOIN teach ON student_enrollment.course_no = teach.course_no
+ORDER BY student_name
+
+### If you execute the query from the previous answer, you'll notice
+### the student_name and the course_no is being repeated. Why is this happening?
+--- That happens because joins clauses combine each matching record from one table to other
+--- and in this case a single student is enrolled in more than one course
+
+### In the previous question you discovered why there is repeating data. How can we eliminate this redundancy?
+### Let's say we only care to see a single professor teaching a course and
+### we don't care for all the other professors that teach the particular course.
+### Write a query that will accomplish this so that every record is distinct.
+SELECT
+  student_name, course_no, min(last_name)
+FROM (
+  SELECT
+    student_name, teach.course_no, last_name
+  FROM
+    students INNER JOIN student_enrollment ON students.student_no = student_enrollment.student_no
+    INNER JOIN teach ON student_enrollment.course_no = teach.course_no
+) a
+GROUP BY student_name, course_no
+ORDER BY student_name, course_no;
+
+### Write a query that returns ALL of the students as well as any courses they may or may not be taking.
+SELECT
+  student_name, course_no
+FROM students LEFT JOIN student_enrollment ON students.student_no = student_enrollment.student_no
+ORDER BY student_name
+
+### Why are correlated subqueries slower that non-correlated subqueries and joins?
+--- Correlated subqueries run for every single record on the outter query and subqueries and joins run
+--- only one time
+
+### We've been discussing the employees table and the departments table.
+### Considering those tables, write a query that returns employees whose salary is above average
+### for their given department.
+SELECT first_name, salary, department
+FROM employees e1
+WHERE salary > (SELECT AVG(salary) FROM employees e2 WHERE e2.department = e1.department )
+ORDER BY department
+
